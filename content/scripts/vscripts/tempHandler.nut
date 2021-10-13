@@ -2,6 +2,8 @@
 toolTempHistory <- [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 bedTempHistory <- [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 tempGraphLocation <- Entities.FindByName(null, "@tempGraph")
+bedTemp <- [Entities.FindByName(null, "@tempBed"), -8] //index 1 is the height offset, 0 is the ent handle
+toolTemp <- [Entities.FindByName(null, "@tempTool"), 0]
 
 graphSpacing <- 4
 graphHeightFactor <- 0.25
@@ -9,12 +11,12 @@ graphHeightFactor <- 0.25
 function DrawGraphs()
 {
     EntFireByHandle(masterScript, "RunScriptCode", "DrawGraphs()", 1, masterScript, masterScript)
-    DrawGraph(toolTempHistory,255,0,0)
-    DrawGraph(bedTempHistory,0,0,255)
+    DrawGraph(toolTempHistory,255,0,0,toolTemp)
+    DrawGraph(bedTempHistory,0,0,255,bedTemp)
 }
 
 //Starts draw from the bottom right (lmao what a choice) of the graph and draws backwards
-function DrawGraph(arr,r,g,b)
+function DrawGraph(arr,r,g,b,tool)
 {
     local graphOrigin = tempGraphLocation.GetOrigin()
 
@@ -23,6 +25,12 @@ function DrawGraph(arr,r,g,b)
         local startingPoint = Vector(graphOrigin.x - (graphSpacing * i), graphOrigin.y, graphOrigin.z + (arr[i].tofloat() * graphHeightFactor))
         local endingPoint = Vector(graphOrigin.x - (graphSpacing * (i+1)), graphOrigin.y, graphOrigin.z + (arr[i+1].tofloat() * graphHeightFactor))
         DebugDrawLine(startingPoint, endingPoint, r,g,b, false, 1.02)
+
+        if(i == 0)
+        {
+            tool[0].SetOrigin(Vector(startingPoint.x,startingPoint.y,startingPoint.z + tool[1]))
+            EntFireByHandle(tool[0], "addoutput", "message " + arr[i].tofloat(), 0.00, tool[0], tool[0])
+        }
     }
 
     for (local i = 0;i < 30 ;i++ )
@@ -31,6 +39,7 @@ function DrawGraph(arr,r,g,b)
         local endingPoint = Vector(graphOrigin.x - 0.1 - (graphSpacing * (i+1)), graphOrigin.y, graphOrigin.z + 0.1 + (arr[i+1].tofloat() * graphHeightFactor))
         DebugDrawLine(startingPoint, endingPoint, r,g,b, false, 1.02)
     }
+    
     
 }
 

@@ -22,11 +22,13 @@ namespace CSGO_3DPrinter
         private static int sshPort = 2222;
         private static string sshUser = "csgo";
         private static string sshPassword = "P4ssw0rd!"; //this isn't a prod password
-        private static readonly List<string> csgoTaskList = new List<string>();
-        private static readonly List<string> octoprintTaskList = new List<string>();
+        private static List<string> csgoTaskList = new List<string>();
+        private static List<string> octoPrintFileList = new List<string>();
         private static bool _forwardToCsgo = false;
-        private static bool _forwardToOctoprint = false;
-        private static string _currentOctoprintState;
+        
+
+        //Octoprint must have: https://github.com/kantlivelong/OctoPrint-SSHInterface
+        //CSGO requires -netconport 2121
 
         //If anyone complains about how bad this is, just think about the goal of what this code does.
         //There is no point, it's stupid as heck.
@@ -62,18 +64,12 @@ namespace CSGO_3DPrinter
             //Start listening forever and always
             _ = Task.Run(async () => ListenCSGO());
 
+            //Spam breaks to make sure we are at the top level in the SSH terminal.
             await Task.Delay(2000);
-            SendToOctoprint("terminal");
-            _forwardToCsgo = true;
+            await SSHBreak();
 
             while (true)
             {
-                //octoprintTaskList contains commands to be sent TO octoprint
-                if (octoprintTaskList.Count != 0)
-                {
-
-                }
-
                 //csgoTaskList contains commands to be sent TO csgo
                 if (csgoTaskList.Count != 0)
                 {
@@ -81,7 +77,7 @@ namespace CSGO_3DPrinter
                     csgoTaskList.RemoveAt(0);
                 }
 
-                await Task.Delay(20);
+                await Task.Delay(5);
             }
         }
 
@@ -95,6 +91,14 @@ namespace CSGO_3DPrinter
             await _client.WriteLine($"script IncomingMessage(\"{message}\")");
         }
 
+        public static async Task SSHBreak()
+        {
+            await Task.Delay(250);
+            _shellStreamSSH.WriteLine("\u0003");
+            await Task.Delay(250);
+            _shellStreamSSH.WriteLine("\u0003");
+        }
+
         /// <summary>
         /// Commands that come from CSGO will land here
         /// </summary>
@@ -102,18 +106,37 @@ namespace CSGO_3DPrinter
         /// <returns></returns>
         public static async Task HandleCommandFromCSGO(string command)
         {
+            string filename = "";
+            if (command.StartsWith("start"))
+            {
+                var index = command.Split('_');
+                var fileIndex = int.Parse(index[1]);
+                filename = octoPrintFileList[fileIndex];
+                command = "start";
+            }
             switch (command)
             {
                 case "terminal":
+                    await SSHBreak();
+                    _shellStreamSSH.WriteLine("terminal");
 
-                    _ = Task.Run(async () =>{
-                        await Task.Delay(2000);
+                    _ = Task.Run(async () => {
+                        //await Task.Delay(2000);
                         _forwardToCsgo = true;
                     });
 
-                    if (_currentOctoprintState == "root")
-                        SendToOctoprint("terminal");
-                    //todo handle non-root entry
+                    break;
+                case "updateFiles":
+                    _forwardToCsgo = false;
+                    await SSHBreak();
+                    await Task.Delay(500);
+                    await GetFilesFromSSH();
+                    break;
+                case "start":
+                    _forwardToCsgo = false;
+                    await SSHBreak();
+                    _shellStreamSSH.WriteLine($"print \"/uploads/{filename}.gcode\"");
+                    await HandleCommandFromCSGO("terminal");
                     break;
                 default:
                     await SendMessageToCsgo($"script printl(\"Unknown command: {command}\")");
@@ -121,15 +144,25 @@ namespace CSGO_3DPrinter
             }
         }
 
-        public static void SendToOctoprint(string message)
+        public static async Task GetFilesFromSSH()
         {
-            _shellStreamSSH.WriteLine(message);
+            Console.WriteLine("Getting SSH file list");
+            octoPrintFileList = new List<string>();
+            _shellStreamSSH.WriteLine("ls uploads");
+            await Task.Delay(1000);
+            Console.WriteLine("Done collecting files...");
+            
+            //The first file always sucks because I suck.
+            octoPrintFileList.RemoveAt(0);
+            foreach (var o in octoPrintFileList)
+            {
+                await _client.WriteLine($"script HandleIncomingFiles(\"{o}\")");
+            }
         }
 
         public static async Task ReadSSHStream()
         {
             Console.WriteLine("Starting SSH Stream");
-            _currentOctoprintState = "root";
             while (true)
             {
                 if (_shellStreamSSH.CanRead)
@@ -146,6 +179,18 @@ namespace CSGO_3DPrinter
                             .Replace(">", string.Empty);
                         if (string.IsNullOrWhiteSpace(reply) || reply.Length < 2)
                             continue;
+
+                        if (reply.Contains(".gcode"))
+                        {
+                            reply = reply.Replace("ls uploads", string.Empty).Replace(@"[/]$",string.Empty).Replace(".metadata.json",string.Empty).Replace("loads",string.Empty);
+                            Console.WriteLine(reply);
+                            foreach (var s in reply.Split(".gcode"))
+                            {
+                                if (string.IsNullOrWhiteSpace(s))
+                                    continue;
+                                octoPrintFileList.Add(s);
+                            }
+                        }
 
                         var arrayReply = reply.Split("Recv: ");
 
@@ -172,12 +217,11 @@ namespace CSGO_3DPrinter
             Console.WriteLine("Listening to CSGO!");
             while (true)
             {
-                var reply = await _client.ReadAsync(TimeSpan.FromSeconds(1));
+                var reply = await _client.ReadAsync();
                 if (string.IsNullOrEmpty(reply))
                     continue;
-                Console.WriteLine($"From CSGO: {reply}");
-                if(_forwardToOctoprint)
-                    octoprintTaskList.Add(reply);
+                if(reply.StartsWith("[OCTO]"))
+                    await HandleCommandFromCSGO(reply.Replace("[OCTO]",string.Empty).Trim());
             }
         }
     }
