@@ -2,7 +2,7 @@ versioninfo
 {
 	"editorversion" "400"
 	"editorbuild" "9093"
-	"mapversion" "45"
+	"mapversion" "48"
 	"formatversion" "100"
 	"prefab" "0"
 }
@@ -11,7 +11,7 @@ visgroups
 }
 viewsettings
 {
-	"bSnapToGrid" "0"
+	"bSnapToGrid" "1"
 	"bShowGrid" "1"
 	"bShowLogicalGrid" "0"
 	"nGridSpacing" "8"
@@ -20,7 +20,7 @@ viewsettings
 world
 {
 	"id" "1"
-	"mapversion" "45"
+	"mapversion" "48"
 	"classname" "worldspawn"
 	"detailmaterial" "detail/detailsprites"
 	"detailvbsp" "detail.vbsp"
@@ -857,7 +857,8 @@ world
 		}
 		editor
 		{
-			"color" "0 105 226"
+			"color" "185 138 0"
+			"groupid" "3208"
 			"visgroupshown" "1"
 			"visgroupautoshown" "1"
 		}
@@ -933,10 +934,94 @@ world
 		}
 		editor
 		{
-			"color" "0 236 197"
+			"color" "185 138 0"
+			"groupid" "3208"
 			"visgroupshown" "1"
 			"visgroupautoshown" "1"
 		}
+	}
+	group
+	{
+		"id" "4693"
+		editor
+		{
+			"color" "185 138 0"
+			"groupid" "5082"
+			"visgroupshown" "1"
+			"visgroupautoshown" "1"
+		}
+	}
+	group
+	{
+		"id" "5082"
+		editor
+		{
+			"color" "185 138 0"
+			"visgroupshown" "1"
+			"visgroupautoshown" "1"
+		}
+	}
+	group
+	{
+		"id" "3949"
+		editor
+		{
+			"color" "185 138 0"
+			"groupid" "4693"
+			"visgroupshown" "1"
+			"visgroupautoshown" "1"
+		}
+	}
+	group
+	{
+		"id" "3208"
+		editor
+		{
+			"color" "185 138 0"
+			"groupid" "3949"
+			"visgroupshown" "1"
+			"visgroupautoshown" "1"
+		}
+	}
+}
+entity
+{
+	"id" "2695"
+	"classname" "logic_eventlistener"
+	"EventName" "weapon_fire"
+	"FetchEventData" "0"
+	"IsEnabled" "1"
+	"targetname" "@shootEventListener"
+	"TeamNum" "-1"
+	connections
+	{
+		"OnEventFired" "@shootEventListenerRunScriptCodeplayerShoot()0-1"
+	}
+	"origin" "108 -92 16"
+	editor
+	{
+		"color" "185 138 0"
+		"groupid" "3208"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 500]"
+	}
+}
+entity
+{
+	"id" "2697"
+	"classname" "logic_script"
+	"targetname" "@masterScript"
+	"thinkfunction" "Think"
+	"vscripts" "3dprinter.nut"
+	"origin" "108 -108 16"
+	editor
+	{
+		"color" "185 138 0"
+		"groupid" "3208"
+		"visgroupshown" "1"
+		"visgroupautoshown" "1"
+		"logicalpos" "[0 0]"
 	}
 }
 entity
@@ -949,32 +1034,11 @@ entity
 	"origin" "-160 -0.5 16"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 10000]"
-	}
-}
-entity
-{
-	"id" "2193"
-	"classname" "logic_eventlistener"
-	"EventName" "weapon_fire"
-	"FetchEventData" "0"
-	"IsEnabled" "1"
-	"targetname" "@shootEventListener"
-	"TeamNum" "-1"
-	connections
-	{
-		"OnEventFired" "@shootEventListenerRunScriptCodeplayerShoot()0-1"
-	}
-	"origin" "216 -168 7.99998"
-	editor
-	{
-		"color" "220 30 220"
-		"visgroupshown" "1"
-		"visgroupautoshown" "1"
-		"logicalpos" "[0 500]"
 	}
 }
 entity
@@ -1021,7 +1085,8 @@ entity
 	"origin" "112 -176 40"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3949"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 1500]"
@@ -1124,14 +1189,15 @@ entity
 		}
 		editor
 		{
-			"color" "220 30 220"
+			"color" "185 138 0"
 			"visgroupshown" "1"
 			"visgroupautoshown" "1"
 		}
 	}
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3949"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 2500]"
@@ -1238,14 +1304,15 @@ entity
 		}
 		editor
 		{
-			"color" "220 30 220"
+			"color" "185 138 0"
 			"visgroupshown" "1"
 			"visgroupautoshown" "1"
 		}
 	}
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3949"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 3500]"
@@ -1264,7 +1331,8 @@ entity
 	"origin" "130 4.91632 18"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1289,7 +1357,8 @@ entity
 	"origin" "0 0 0"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1314,7 +1383,8 @@ entity
 	"origin" "-80 80 0"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1339,7 +1409,8 @@ entity
 	"origin" "-80 -80 0"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1364,7 +1435,8 @@ entity
 	"origin" "80 -80 0"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1389,7 +1461,8 @@ entity
 	"origin" "80 80 0"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 500]"
@@ -1420,7 +1493,8 @@ entity
 	"origin" "-144 -80 16"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1451,7 +1525,8 @@ entity
 	"origin" "-160 -80 16"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1470,7 +1545,8 @@ entity
 	"origin" "-278 2 90"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1489,7 +1565,8 @@ entity
 	"origin" "130 4.91632 34"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1508,7 +1585,8 @@ entity
 	"origin" "130 4.91632 50"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1527,7 +1605,8 @@ entity
 	"origin" "-158 -2 22"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1546,7 +1625,8 @@ entity
 	"origin" "-158 -2 34"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1565,7 +1645,8 @@ entity
 	"origin" "130 4.91632 66"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1584,7 +1665,8 @@ entity
 	"origin" "130 4.91632 82"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1603,7 +1685,8 @@ entity
 	"origin" "130 4.91632 98"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1622,7 +1705,8 @@ entity
 	"origin" "130 4.91632 114"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1641,7 +1725,8 @@ entity
 	"origin" "130 4.91632 130"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1660,7 +1745,8 @@ entity
 	"origin" "130 4.91632 146"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1679,7 +1765,8 @@ entity
 	"origin" "130 4.91632 162"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1698,7 +1785,8 @@ entity
 	"origin" "130 4.91632 178"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1717,23 +1805,8 @@ entity
 	"origin" "130 4.91632 194"
 	editor
 	{
-		"color" "220 30 220"
-		"visgroupshown" "1"
-		"visgroupautoshown" "1"
-		"logicalpos" "[0 0]"
-	}
-}
-entity
-{
-	"id" "3"
-	"classname" "logic_script"
-	"targetname" "@masterScript"
-	"thinkfunction" "Think"
-	"vscripts" "3dprinter.nut"
-	"origin" "216 -184 8"
-	editor
-	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 0]"
@@ -1763,7 +1836,7 @@ entity
 	"targetname" "main_fog"
 	"use_angles" "0"
 	"ZoomFogScale" "1"
-	"origin" "232 -184 8"
+	"origin" "232 -280 8"
 	editor
 	{
 		"color" "255 255 255"
@@ -1777,7 +1850,7 @@ entity
 	"id" "7"
 	"classname" "env_tonemap_controller"
 	"targetname" "@tonemapper"
-	"origin" "232 -168 8"
+	"origin" "232 -264 8"
 	editor
 	{
 		"color" "220 30 220"
@@ -1799,7 +1872,7 @@ entity
 		"OnMapSpawn" "@tonemapperSetTonemapRate.250-1"
 		"OnMapSpawn" "@tonemapperSetAutoExposureMin0.30-1"
 	}
-	"origin" "248 -168 8"
+	"origin" "248 -264 8"
 	editor
 	{
 		"color" "220 30 220"
@@ -1821,7 +1894,7 @@ entity
 	"angles" "0 98 0"
 	"pitch" "-78"
 	"SunSpreadAngle" "4"
-	"origin" "248 -184 8"
+	"origin" "248 -280 8"
 	editor
 	{
 		"color" "220 30 220"
@@ -1890,7 +1963,8 @@ entity
 	"origin" "-116 -116 8"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "4693"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 9500]"
@@ -1906,7 +1980,8 @@ entity
 	"origin" "416 -64 16"
 	editor
 	{
-		"color" "220 30 220"
+		"color" "185 138 0"
+		"groupid" "3208"
 		"visgroupshown" "1"
 		"visgroupautoshown" "1"
 		"logicalpos" "[0 10000]"
