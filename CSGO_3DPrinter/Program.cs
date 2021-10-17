@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
@@ -25,7 +26,8 @@ namespace CSGO_3DPrinter
         private static List<string> csgoTaskList = new List<string>();
         private static List<string> octoPrintFileList = new List<string>();
         private static bool _forwardToCsgo = false;
-        
+        private static List<DateTime> messageRateList = new List<DateTime>();
+        private static List<string> consoleOutput = new List<string>();
 
         //Octoprint must have: https://github.com/kantlivelong/OctoPrint-SSHInterface
         //CSGO requires -netconport 2121
@@ -36,16 +38,17 @@ namespace CSGO_3DPrinter
         {
             var connectionInfo = new ConnectionInfo(sshTarget,sshPort,sshUser,
                 new PasswordAuthenticationMethod(sshUser, sshPassword));
-
+            Console.Title = $"CSGOctoPrint";
             Console.WriteLine("Connecting to SSH");
             _sshClient = new SshClient(connectionInfo);
             
             _sshClient.Connect();
             Console.WriteLine($"SSH Connected: {_sshClient.IsConnected}");
-
+            
             _shellStreamSSH = _sshClient.CreateShellStream("", 0, 0, 0, 0, 512);
-            _ = Task.Run(async () => ReadSSHStream());
 
+            _ = Task.Run(async () => ReadSSHStream());
+            
             while (_client == null || !_client.IsConnected)
             {
                 Console.WriteLine("Waiting for game client...");
@@ -68,16 +71,65 @@ namespace CSGO_3DPrinter
             await Task.Delay(2000);
             await SSHBreak();
 
+            _ = Task.Run(async () => UpdateTitle());
+
             while (true)
             {
+                
                 //csgoTaskList contains commands to be sent TO csgo
                 if (csgoTaskList.Count != 0)
                 {
                     await SendMessageToCsgo(csgoTaskList[0]);
-                    csgoTaskList.RemoveAt(0);
-                }
+                    messageRateList.Add(DateTime.Now);
 
-                await Task.Delay(5);
+                    csgoTaskList.RemoveAt(0);
+
+                    //This helps keep the command queue full so we don't hit race conditions
+                    //Also ensures we have AT LEAST 5 seconds of commands in the draw "buffer"
+                    //to have a smoother drawing experience inside CSGO.
+                    if (csgoTaskList.Count < 50)
+                        await Task.Delay(100);
+                }
+            }
+        }
+
+        public static async Task UpdateTitle()
+        {
+            consoleOutput.Add("Starting title updates!");
+            while (true)
+            {
+                
+                messageRateList.RemoveAll(x => x <= DateTime.Now.AddSeconds(-1));
+                Console.Title =
+                    $"CSGOctoPrint - Message Queue: [{csgoTaskList.Count}] - Message Rate: [{messageRateList.Count}]/s";
+                try
+                    {
+                    if (consoleOutput.Count > Console.WindowHeight)
+                        consoleOutput.RemoveRange(0, consoleOutput.Count - Console.WindowHeight);
+                    string output = "";
+                    for (int i = 0; i < consoleOutput.Count - 1; i++)
+                    {
+                        string newCommand = consoleOutput[i];
+                        string whiteSpace = "";
+
+                        //Use this to overwrite any space that would have been otherwise caused from variable string lengths
+                        for (int j = 0; j < Console.WindowWidth - newCommand.Length - 1; j++)
+                        {
+                            whiteSpace += " ";
+                        }
+
+                        output += newCommand + whiteSpace + "\n";
+                    }
+
+                    //By moving the cursor up top, we can prevent wild flickering the we'd get with Console.Clear()
+                    Console.SetCursorPosition(0, 0);
+                    Console.Write(output);
+                    await Task.Delay(250);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
         }
 
@@ -87,7 +139,8 @@ namespace CSGO_3DPrinter
             if (message == null)
                 return;
             message = message.Replace('"', '\'');
-            Console.WriteLine($"To CSGO: {message}");
+            consoleOutput.Add($"To CSGO:[{message}]");
+            //Console.WriteLine($"To CSGO:[{message}]");
             await _client.WriteLine($"script IncomingMessage(\"{message}\")");
         }
 
@@ -106,6 +159,11 @@ namespace CSGO_3DPrinter
         /// <returns></returns>
         public static async Task HandleCommandFromCSGO(string command)
         {
+            if (command.Contains("\r\n"))
+            {
+                var split = command.Split("\r\n");
+                command = split[0];
+            }
             string filename = "";
             if (command.StartsWith("start"))
             {
@@ -120,10 +178,7 @@ namespace CSGO_3DPrinter
                     await SSHBreak();
                     _shellStreamSSH.WriteLine("terminal");
 
-                    _ = Task.Run(async () => {
-                        //await Task.Delay(2000);
-                        _forwardToCsgo = true;
-                    });
+                    _forwardToCsgo = true;
 
                     break;
                 case "updateFiles":
@@ -135,7 +190,7 @@ namespace CSGO_3DPrinter
                 case "start":
                     _forwardToCsgo = false;
                     await SSHBreak();
-                    _shellStreamSSH.WriteLine($"print \"/uploads/{filename}.gcode\"");
+                    _shellStreamSSH.WriteLine($"print \"/uploads/{filename}\"");
                     await HandleCommandFromCSGO("terminal");
                     break;
                 default:
@@ -146,14 +201,14 @@ namespace CSGO_3DPrinter
 
         public static async Task GetFilesFromSSH()
         {
-            Console.WriteLine("Getting SSH file list");
+            //Console.WriteLine("Getting SSH file list");
+            consoleOutput.Add("Getting SSH file list");
             octoPrintFileList = new List<string>();
             _shellStreamSSH.WriteLine("ls uploads");
             await Task.Delay(1000);
-            Console.WriteLine("Done collecting files...");
+            consoleOutput.Add("Done collecting files...");
+            //Console.WriteLine("Done collecting files...");
             
-            //The first file always sucks because I suck.
-            octoPrintFileList.RemoveAt(0);
             foreach (var o in octoPrintFileList)
             {
                 await _client.WriteLine($"script HandleIncomingFiles(\"{o}\")");
@@ -167,47 +222,29 @@ namespace CSGO_3DPrinter
             {
                 if (_shellStreamSSH.CanRead)
                 {
-                    byte[] buffer = new byte[512];
-                    int i = await _shellStreamSSH.ReadAsync(buffer, 0, buffer.Length);
+                    var reply = _shellStreamSSH.ReadLine();
+                    reply = Regex.Replace(reply, @"\p{C}+", string.Empty)
+                        .Replace("[2K", string.Empty)
+                        .Replace("[1A", string.Empty)
+                        .Replace("Not SD printing", string.Empty)
+                        .Replace("ok", string.Empty)
+                        .Replace("wait", string.Empty)
+                        .Replace("[/]$", string.Empty)
+                        .Replace(">",string.Empty)
+                        .Replace("Recv: ", string.Empty)
+                        .Trim();
 
-                    if (i != 0)
+                    if (string.IsNullOrWhiteSpace(reply))
+                        continue;
+
+                    if (reply.Contains(".gcode") && !reply.Contains(".metadata.json"))
                     {
-                        string reply = _sshClient.ConnectionInfo.Encoding.GetString(buffer, 0, i).Trim();
-                        reply = Regex.Replace(reply, @"\p{C}+", string.Empty)
-                            .Replace("[2K",String.Empty)
-                            .Replace("[1A",String.Empty)
-                            .Replace(">", string.Empty);
-                        if (string.IsNullOrWhiteSpace(reply) || reply.Length < 2)
-                            continue;
-
-                        if (reply.Contains(".gcode"))
-                        {
-                            reply = reply.Replace("ls uploads", string.Empty).Replace(@"[/]$",string.Empty).Replace(".metadata.json",string.Empty).Replace("loads",string.Empty);
-                            Console.WriteLine(reply);
-                            foreach (var s in reply.Split(".gcode"))
-                            {
-                                if (string.IsNullOrWhiteSpace(s))
-                                    continue;
-                                octoPrintFileList.Add(s);
-                            }
-                        }
-
-                        var arrayReply = reply.Split("Recv: ");
-
-                        foreach (var s in arrayReply)
-                        {
-                            var trimmedS = s.Replace("ok", string.Empty)
-                                .Replace(">", string.Empty)
-                                .Replace("wait", string.Empty)
-                                .Trim();
-                            if (string.IsNullOrWhiteSpace(trimmedS))
-                                continue;
-
-                            Console.WriteLine($"From Octoprint: {trimmedS}");
-                            if(_forwardToCsgo)
-                                csgoTaskList.Add(trimmedS);
-                        }
+                        octoPrintFileList.Add(reply);
                     }
+                    consoleOutput.Add($"From Octoprint:[{reply}]");
+                    //Console.WriteLine($"From Octoprint:[{reply}]");
+                    if (_forwardToCsgo)
+                        csgoTaskList.Add(reply);
                 }
             }
         }
@@ -217,10 +254,11 @@ namespace CSGO_3DPrinter
             Console.WriteLine("Listening to CSGO!");
             while (true)
             {
-                var reply = await _client.ReadAsync();
-                if (string.IsNullOrEmpty(reply))
+                string reply = await _client.ReadAsync();
+                
+                if(string.IsNullOrWhiteSpace(reply))
                     continue;
-                if(reply.StartsWith("[OCTO]"))
+                if (reply.StartsWith("[OCTO]"))
                     await HandleCommandFromCSGO(reply.Replace("[OCTO]",string.Empty).Trim());
             }
         }
