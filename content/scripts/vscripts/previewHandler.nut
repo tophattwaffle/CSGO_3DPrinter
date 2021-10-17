@@ -9,13 +9,14 @@ linesDrawn <- 0
 gradientDirection <- true
 currentZText <- Entities.FindByName(null, "@currentZ")
 
+newVector <- Vector()
 
 //Store a location history. Used for drawing
-locationHistory <- [null,null,null]
+locationHistory <- [newVector,newVector,newVector]
 
 function handleColorChange(input)
 {
-    colorChangeAmount = FindAngleBetweenLinesFromFixed(input,locationHistory[0])
+    colorChangeAmount = FindAngleBetweenLinesFromFixed(input,locationHistory[1])
     
     if(colorChangeAmount > 0)
         colorChangeAmount += 90
@@ -58,11 +59,18 @@ function ResetColorChange()
     colorChangeAmount = 0
 }
 
+//function HandleG1(input,doDraw)
 function HandleG1(input)
 {
     local parsed = ParseG1(input)
 
+    if(parsed.x != -1 && parsed.y != -1)
+    {
+        locationHistory.insert(0,parsed)
+        locationHistory.pop()
+    }
     //Only draw valid moves
+    //if(doDraw && parsed.z == 1 && parsed.x != -1 && parsed.y != -1)
     if(parsed.z == 1 && parsed.x != -1 && parsed.y != -1)
     {
         handleColorChange(parsed)
@@ -72,24 +80,22 @@ function HandleG1(input)
 
     //Make sure to store the last location so we know where to draw from next.
     //But we must be sure that we don't store invalid items
-    if(parsed.x != -1 && parsed.y != -1)
-    {
-        locationHistory.insert(0,parsed)
-        locationHistory.pop()
-    }
+    
 }
 
 function DrawMove(nextPoint)
 {
     linesDrawn++
     local startingPoint = Vector(nextPoint.x + home.x, nextPoint.y + home.y, currentZ + home.z)
-    local endPoint = Vector(locationHistory[0].x + home.x, locationHistory[0].y + home.y, currentZ + home.z)
+    local endPoint = Vector(locationHistory[1].x + home.x, locationHistory[1].y + home.y, currentZ + home.z)
+    //printl(nextPoint + " " + startingPoint + " " + endPoint)
     DebugDrawLine(startingPoint, endPoint, lineColorR,lineColorG,lineColorB, false, lineLifeTime)
     VS.DrawVertArrow(Vector(startingPoint.x,startingPoint.y,startingPoint.z+32),Vector(startingPoint.x, startingPoint.y, startingPoint.z + 1), 2, 255,0,0,false,0.05)
 }
 
 function ParseG1(input)
 {
+    //printl("G1 Input: " + input)
     local arr = split(input," ")
     local newVector = Vector(-1,-1,-1)
     foreach (a in arr)
@@ -104,10 +110,11 @@ function ParseG1(input)
                 break
             case "Z":
                 currentZ = a.slice(1).tofloat()
-                EntFireByHandle(currentZText, "addoutput", "message Current Z - " + currentZ, 0.00, null, null)
+                EntFireByHandle(currentZText, "addoutput", "message Current Z = " + currentZ, 0.00, null, null)
+                //printl("CurrentZ: " + currentZ)
 
                 //Flip between 255 and 96
-                if(lineColorR >= 255 || lineColorR < 96)
+                if(lineColorR >= 255 || lineColorR < 64)
                     gradientDirection = !gradientDirection
 
                 //This gives us a nice gradient was we move upwards
@@ -128,5 +135,6 @@ function ParseG1(input)
                 break
         }
     }
+    
     return newVector
 }

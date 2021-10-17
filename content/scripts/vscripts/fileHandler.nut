@@ -15,8 +15,8 @@ bIsPrinting <- false
 
 ::HandleIncomingFiles <- function(msg)
 {
-    printl("Added: " + msg)
-    fileList.append(msg + ".gcode")
+    //printl("Added: " + msg)
+    fileList.append(msg)
     DrawFileList()
 }.bindenv(this)
 
@@ -39,18 +39,13 @@ function StartPrint()
     EntFireByHandle(statusText, "addoutput", "message Printing!", 0.00, null, null)
     EntFireByHandle(statusText, "addoutput", "color 128 128 255", 0.00, null, null)
     EntFire("killMe","kill")
-    IsPrinting = true
+    bIsPrinting = true
 }
 
 function UpdateFileList()
 {
-    printl("Updating file list!")
-    
-    //TEMP DISABLED FOR TESTING
     EntFireByHandle(masterScript, "RunScriptCode", "printSolo(\"[OCTO]updateFiles\")", 0.5, null, null)
     fileList = []
-    //force a draw for testing purposes
-    //DrawFileList()
 }
 
 function DrawFileList()

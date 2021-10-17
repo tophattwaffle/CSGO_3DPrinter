@@ -11,6 +11,9 @@ function StartsWith(left, right, caseSensitive = true)
 
     for(local i = 0; i < right.len(); i++)
     {
+        if(i >= left.len())
+            break
+
         if(left[i] != right[i])
             return false
     }
@@ -37,7 +40,7 @@ function FindAngleBetweenLinesAlt(vec1, vec2, vec3)
 
 function FindAngleBetweenLinesFromFixed(vec1, vec2)
 {
-    return atan((vec1.y - vec2.y) / (vec1.x - vec2.x)) * 180 / PI - 45
+    return atan((vec1.y - vec2.y) / (vec1.x - vec2.x)) * 180 / PI - 40
 }
 
 //Creates a volume that you can use for things like trigger_multiple and such
